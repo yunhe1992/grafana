@@ -18,7 +18,7 @@ export function useExternalDataSourceAlertmanagers(): ExternalDataSourceAM[] {
   const { useGetExternalAlertmanagersQuery } = alertmanagerApi;
   const { currentData: discoveredAlertmanagers } = useGetExternalAlertmanagersQuery();
 
-  const externalDsAlertManagers = getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
+  const externalDsAlertManagers = getAlertManagerDataSources();
 
   const alertmanagerDatasources = useSelector((state) =>
     keyBy(

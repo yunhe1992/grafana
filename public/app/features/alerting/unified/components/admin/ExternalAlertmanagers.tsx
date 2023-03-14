@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { loadDataSources } from 'app/features/datasources/state/actions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -38,9 +38,13 @@ export const ExternalAlertmanagers = () => {
 
   const alertmanagersChoice = externalAlertmanagerConfig?.alertmanagersChoice;
 
+  const isExternal = alertmanagersChoice && alertmanagersChoice !== AlertmanagerChoice.Internal
+
   useEffect(() => {
-    dispatch(loadDataSources());
-  }, [dispatch]);
+    if (isExternal) {
+      dispatch(loadDataSources());
+    }
+  }, [dispatch, isExternal]);
 
   const onChangeAlertmanagerChoice = (alertmanagersChoice: AlertmanagerChoice) => {
     saveExternalAlertManagers({ alertmanagersChoice });
@@ -49,18 +53,13 @@ export const ExternalAlertmanagers = () => {
   return (
     <div>
       <h4>External Alertmanagers</h4>
-      <Alert title="External Alertmanager changes" severity="info">
-        The way you configure external Alertmanagers has changed.
-        <br />
-        You can now use configured Alertmanager data sources as receivers of your Grafana-managed alerts.
-        <br />
-        For more information, refer to our documentation.
-      </Alert>
 
       <div className={styles.amChoice}>
         <Field
           label="Send alerts to"
-          description="Configures how the Grafana alert rule evaluation engine Alertmanager handles your alerts. Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured below), or both."
+          description={<>
+            <p>Configures how the Grafana alert rule evaluation engine Alertmanager handles your alerts.</p> <p>Internal (Grafana built-in Alertmanager), External (All Alertmanagers configured below), or both.</p>
+          </>}
         >
           <RadioButtonGroup
             options={alertmanagerChoices}
@@ -70,10 +69,9 @@ export const ExternalAlertmanagers = () => {
         </Field>
       </div>
 
-      <ExternalAlertmanagerDataSources
-        alertmanagers={externalDsAlertManagers}
-        inactive={alertmanagersChoice === AlertmanagerChoice.Internal}
-      />
+      {isExternal && (
+        <ExternalAlertmanagerDataSources alertmanagers={externalDsAlertManagers} inactive={false} />
+      )}
     </div>
   );
 };
