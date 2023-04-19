@@ -56,7 +56,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           return { ...acc, [key]: value };
         }, {}),
       startsAt: '2023-04-01T00:00:00Z',
-      endsAt: firing ? addDays(new Date(), 2).toISOString() : '2023-12-01T00:05:00Z',
+      endsAt: firing ? addDays(new Date(), 2).toISOString() : '2022-12-01T00:05:00Z',
     };
     setAlerts((alerts) => [...alerts, alert]);
     formMethods.reset();
