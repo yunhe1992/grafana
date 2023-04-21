@@ -22,7 +22,6 @@ const renderWithProvider = () => {
     </Provider>
   );
 };
-const defaultPayloadObj = JSON.parse(DEFAULT_PAYLOAD);
 
 describe('Payload editor', () => {
   it('Should render default payload by default', async () => {
