@@ -22,13 +22,14 @@ const renderWithProvider = () => {
     </Provider>
   );
 };
+const defaultPayloadObj = JSON.parse(DEFAULT_PAYLOAD);
 
 describe('Payload editor', () => {
   it('Should render default payload by default', async () => {
     renderWithProvider();
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
-        '{ "alerts": [{ "annotations": { "summary": "Instance instance1 has been down for more than 5 minutes" }, "labels": { "instance": "instance1" }, "startsAt": "2023-04-01T00:00:00Z", "endsAt": "2023-04-01T00:05:00Z" }] }'
+        `[ { "annotations": { "summary": "Instance instance1 has been down for more than 5 minutes" }, "labels": { "instance": "instance1" }, "startsAt": "2023-04-01T00:00:00Z", "endsAt": "2023-12-01T00:05:00Z" }]`
       );
     });
   });
@@ -37,7 +38,7 @@ describe('Payload editor', () => {
     renderWithProvider();
     await waitFor(() => {
       expect(screen.getByTestId('payloadJSON')).toHaveTextContent(
-        '{ "alerts": [{ "annotations": { "summary": "Instance instance1 has been down for more than 5 minutes" }, "labels": { "instance": "instance1" }, "startsAt": "2023-04-01T00:00:00Z", "endsAt": "2023-04-01T00:05:00Z" }] }'
+        '[ { "annotations": { "summary": "Instance instance1 has been down for more than 5 minutes" }, "labels": { "instance": "instance1" }, "startsAt": "2023-04-01T00:00:00Z", "endsAt": "2023-12-01T00:05:00Z" }]'
       );
     });
     await userEvent.type(screen.getByTestId('payloadJSON'), 'this is the something');
@@ -45,7 +46,7 @@ describe('Payload editor', () => {
     await userEvent.click(screen.getByText(RESET_TO_DEFAULT));
     await waitFor(() =>
       expect(screen.queryByTestId('payloadJSON')).toHaveTextContent(
-        '{ "alerts": [{ "annotations": { "summary": "Instance instance1 has been down for more than 5 minutes" }, "labels": { "instance": "instance1" }, "startsAt": "2023-04-01T00:00:00Z", "endsAt": "2023-04-01T00:05:00Z" }] }'
+        '[ { "annotations": { "summary": "Instance instance1 has been down for more than 5 minutes" }, "labels": { "instance": "instance1" }, "startsAt": "2023-04-01T00:00:00Z", "endsAt": "2023-12-01T00:05:00Z" }]'
       )
     );
   });
