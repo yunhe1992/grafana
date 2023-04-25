@@ -110,7 +110,7 @@ type DashboardPermissionsService struct {
 }
 
 var DashboardViewActions = []string{dashboards.ActionDashboardsRead}
-var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete}...)
+var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete, dashboards.ActionDashboardsPublicWrite}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
 func ProvideDashboardPermissions(

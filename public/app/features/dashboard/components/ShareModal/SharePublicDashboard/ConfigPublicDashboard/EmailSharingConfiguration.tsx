@@ -15,6 +15,7 @@ import {
   Spinner,
   useStyles2,
 } from '@grafana/ui/src';
+import { contextSrv } from 'app/core/core';
 import {
   useAddRecipientMutation,
   useDeleteRecipientMutation,
@@ -22,7 +23,8 @@ import {
   useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { useSelector } from 'app/types';
+import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
+import { AccessControlAction, useSelector } from 'app/types';
 
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
@@ -42,16 +44,18 @@ const EmailList = ({
   recipients,
   dashboardUid,
   publicDashboardUid,
+  actionsDisabled,
 }: {
   recipients: PublicDashboard['recipients'];
   dashboardUid: string;
   publicDashboardUid: string;
+  actionsDisabled: boolean;
 }) => {
   const styles = useStyles2(getStyles);
   const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteRecipientMutation();
   const [reshareAccess, { isLoading: isReshareLoading }] = useReshareAccessToRecipientMutation();
 
-  const isLoading = isDeleteLoading || isReshareLoading;
+  const disableActions = isDeleteLoading || isReshareLoading || actionsDisabled;
 
   const onDeleteEmail = (recipientUid: string) => {
     reportInteraction('grafana_dashboards_public_delete_sharing_email_clicked');
@@ -78,7 +82,7 @@ const EmailList = ({
                   aria-label="Revoke"
                   title="Revoke"
                   size="sm"
-                  disabled={isLoading}
+                  disabled={disableActions}
                   onClick={() => onDeleteEmail(recipient.uid)}
                   data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
@@ -91,7 +95,7 @@ const EmailList = ({
                   aria-label="Resend"
                   title="Resend"
                   size="sm"
-                  disabled={isLoading}
+                  disabled={disableActions}
                   onClick={() => onReshare(recipient.uid)}
                   data-testid={`${selectors.ReshareLink}-${idx}`}
                 >
@@ -110,6 +114,7 @@ export const EmailSharingConfiguration = () => {
   const styles = useStyles2(getStyles);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
+  const hasNotWritePermissions = !contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
 
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
   const [updateShareType] = useUpdatePublicDashboardMutation();
@@ -162,6 +167,7 @@ export const EmailSharingConfiguration = () => {
               <RadioButtonGroup
                 {...rest}
                 options={options}
+                disabled={hasNotWritePermissions}
                 onChange={(shareType: PublicDashboardShareType) => {
                   reportInteraction('grafana_dashboards_public_share_type_clicked', {
                     type: shareType,
@@ -181,12 +187,14 @@ export const EmailSharingConfiguration = () => {
             description="Invite people by email"
             error={errors.email?.message}
             invalid={!!errors.email?.message || undefined}
+            disabled={hasNotWritePermissions}
           >
             <div className={styles.emailContainer}>
               <Input
                 className={styles.emailInput}
                 placeholder="email"
                 autoCapitalize="none"
+                disabled={hasNotWritePermissions}
                 {...register('email', {
                   required: 'Email is required',
                   pattern: { value: validEmailRegex, message: 'Invalid email' },
@@ -196,7 +204,7 @@ export const EmailSharingConfiguration = () => {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={isAddEmailLoading}
+                disabled={isAddEmailLoading || hasNotWritePermissions}
                 data-testid={selectors.EmailSharingInviteButton}
               >
                 Invite {isAddEmailLoading && <Spinner />}
@@ -208,6 +216,7 @@ export const EmailSharingConfiguration = () => {
               recipients={publicDashboard.recipients}
               dashboardUid={dashboard.uid}
               publicDashboardUid={publicDashboard.uid}
+              actionsDisabled={hasNotWritePermissions}
             />
           )}
         </>
