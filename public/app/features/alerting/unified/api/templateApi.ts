@@ -11,7 +11,7 @@ export interface TemplatePreviewErrors {
   message: string;
   kind: string;
 }
-export interface TemplatesPreviewResponse {
+export interface TemplatePreviewResponse {
   results?: TemplatePreviewResult[];
   errors?: TemplatePreviewErrors[];
 }
@@ -20,23 +20,21 @@ type AnnoField = {
   key: string;
   value: string;
 };
-export interface AlertFields {
+export interface AlertField {
   annotations: AnnoField[];
   labels: AnnoField[];
 }
 
 export const templatesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    previewPayload: build.mutation<TemplatesPreviewResponse, { template: string; alerts: AlertFields[]; name: string }>(
-      {
-        query: ({ template, alerts, name }) => ({
-          url: previewTemplateUrl,
-          data: { template: template, alerts: alerts, name: name },
-          method: 'POST',
-        }),
-      }
-    ),
+    previewTemplate: build.mutation<TemplatePreviewResponse, { template: string; alerts: AlertField[]; name: string }>({
+      query: ({ template, alerts, name }) => ({
+        url: previewTemplateUrl,
+        data: { template: template, alerts: alerts, name: name },
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
-export const { usePreviewPayloadMutation } = templatesApi;
+export const { usePreviewTemplateMutation } = templatesApi;
