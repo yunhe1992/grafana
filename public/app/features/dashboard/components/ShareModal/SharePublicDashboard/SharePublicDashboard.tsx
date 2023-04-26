@@ -38,7 +38,7 @@ export const SharePublicDashboard = (props: Props) => {
     <>
       {isLoading ? (
         <Loader />
-      ) : !publicDashboardPersisted(publicDashboard) ? (
+      ) : !publicDashboardPersisted(publicDashboard?.publicDashboard) ? (
         <CreatePublicDashboard isError={isError} />
       ) : (
         <ConfigPublicDashboard />

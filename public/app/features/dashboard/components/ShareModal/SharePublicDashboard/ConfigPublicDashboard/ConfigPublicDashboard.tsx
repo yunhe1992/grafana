@@ -52,7 +52,6 @@ const ConfigPublicDashboard = () => {
   const { showModal, hideModal } = useContext(ModalsContext);
   const isDesktop = useIsDesktop();
 
-  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const hasEmailSharingEnabled =
     !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
   const dashboardState = useSelector((store) => store.dashboard);
@@ -60,15 +59,16 @@ const ConfigPublicDashboard = () => {
   const dashboardVariables = dashboard.getVariables();
   const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
 
-  const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
+  const { data, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
+  const hasWritePermissions = data?.meta.canEdit;
   const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
 
   const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
     defaultValues: {
-      isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
-      isTimeSelectionEnabled: publicDashboard?.timeSelectionEnabled,
-      isPaused: !publicDashboard?.isEnabled,
+      isAnnotationsEnabled: data?.publicDashboard.annotationsEnabled,
+      isTimeSelectionEnabled: data?.publicDashboard.timeSelectionEnabled,
+      isPaused: !data?.publicDashboard.isEnabled,
     },
   });
 
@@ -78,7 +78,7 @@ const ConfigPublicDashboard = () => {
     const req = {
       dashboard,
       payload: {
-        ...publicDashboard!,
+        ...data!.publicDashboard,
         annotationsEnabled: isAnnotationsEnabled,
         timeSelectionEnabled: isTimeSelectionEnabled,
         isEnabled: !isPaused,
@@ -120,16 +120,16 @@ const ConfigPublicDashboard = () => {
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
       <Field label="Dashboard URL" className={styles.publicUrl}>
         <Input
-          value={generatePublicDashboardUrl(publicDashboard!)}
+          value={generatePublicDashboardUrl(data!.publicDashboard)}
           readOnly
-          disabled={!publicDashboard?.isEnabled}
+          disabled={!data?.publicDashboard.isEnabled}
           data-testid={selectors.CopyUrlInput}
           addonAfter={
             <ClipboardButton
               data-testid={selectors.CopyUrlButton}
               variant="primary"
-              disabled={!publicDashboard?.isEnabled}
-              getText={() => generatePublicDashboardUrl(publicDashboard!)}
+              disabled={!data?.publicDashboard.isEnabled}
+              getText={() => generatePublicDashboardUrl(data!.publicDashboard!)}
             >
               Copy
             </ClipboardButton>
@@ -172,7 +172,7 @@ const ConfigPublicDashboard = () => {
             fill="outline"
             dashboard={dashboard}
             publicDashboard={{
-              uid: publicDashboard!.uid,
+              uid: data!.publicDashboard!.uid,
               dashboardUid: dashboard.uid,
               title: dashboard.title,
             }}

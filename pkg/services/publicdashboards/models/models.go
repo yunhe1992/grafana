@@ -56,6 +56,15 @@ type PublicDashboard struct {
 	UpdatedAt            time.Time     `json:"updatedAt" xorm:"updated_at"`
 }
 
+type PublicDashboardMeta struct {
+	CanEdit bool `json:"canEdit"`
+}
+
+type PublicDashboardFullWithMeta struct {
+	PublicDashboard *PublicDashboard     `json:"publicDashboard"`
+	Meta            *PublicDashboardMeta `json:"meta"`
+}
+
 type EmailDTO struct {
 	Uid       string `json:"uid"`
 	Recipient string `json:"recipient"`

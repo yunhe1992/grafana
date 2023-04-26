@@ -106,7 +106,15 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		return response.Err(ErrPublicDashboardIdentifierNotSet.Errorf("GetPublicDashboard: no dashboard Uid for public dashboard specified"))
 	}
 
+	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUid)
+	evaluate := accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, scope)
+	canEdit, err := api.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluate)
+	if err != nil {
+		return response.Err(err)
+	}
+
 	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dashboardUid)
+
 	if err != nil {
 		return response.Err(err)
 	}
@@ -115,7 +123,14 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		response.Err(ErrPublicDashboardNotFound.Errorf("GetPublicDashboard: public dashboard not found"))
 	}
 
-	return response.JSON(http.StatusOK, pd)
+	dto := &PublicDashboardFullWithMeta{
+		PublicDashboard: pd,
+		Meta: &PublicDashboardMeta{
+			CanEdit: canEdit,
+		},
+	}
+
+	return response.JSON(http.StatusOK, dto)
 }
 
 // CreatePublicDashboard Sets public dashboard for dashboard

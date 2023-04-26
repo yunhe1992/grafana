@@ -6,6 +6,7 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import {
   PublicDashboard,
+  PublicDashboardDTO,
   PublicDashboardSettings,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -45,7 +46,7 @@ export const publicDashboardApi = createApi({
   tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard'],
   refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
-    getPublicDashboard: builder.query<PublicDashboard | undefined, string>({
+    getPublicDashboard: builder.query<PublicDashboardDTO | undefined, string>({
       query: (dashboardUid) => ({
         url: `/dashboards/uid/${dashboardUid}/public-dashboards`,
         manageError: getConfigError,

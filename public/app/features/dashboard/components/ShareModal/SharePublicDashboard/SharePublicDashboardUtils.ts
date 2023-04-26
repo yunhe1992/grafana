@@ -16,6 +16,12 @@ export interface PublicDashboardSettings {
   timeSelectionEnabled: boolean;
 }
 
+export interface PublicDashboardDTO {
+  publicDashboard: PublicDashboard;
+  meta: {
+    canEdit: boolean;
+  };
+}
 export interface PublicDashboard extends PublicDashboardSettings {
   accessToken?: string;
   uid: string;

@@ -503,6 +503,7 @@ export class DashboardModel implements TimeModel {
   }
 
   canEditPanel(panel?: PanelModel | null): boolean | undefined | null {
+    console.log('can edit', this.meta.canEdit);
     return Boolean(this.meta.canEdit && panel && !panel.repeatPanelId && panel.type !== 'row');
   }
 
