@@ -2,7 +2,7 @@ import React from 'react';
 
 import { locationUtil } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, LinkButton, Input, Switch, RadioButtonGroup, Form, Field, InputControl, FieldSet } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole, useDispatch } from 'app/types';
@@ -35,7 +35,11 @@ export const UserInviteForm = () => {
 
   const onSubmit = async (formData: FormModel) => {
     await dispatch(addInvitee(formData)).unwrap();
-    locationService.push('/admin/users/');
+    if (config.featureToggles.topnav) {
+      locationService.push('/admin/users/');
+    } else {
+      locationService.push('/org/users');
+    }
   };
 
   return (
