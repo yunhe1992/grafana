@@ -140,9 +140,9 @@ export const publicDashboardApi = createApi({
       }),
       providesTags: (result, _, email) => [{ type: 'ActiveUserDashboards', id: email }],
     }),
-    listPublicDashboards: builder.query<PublicDashboardListWithPagination, number | void>({
-      query: (page = 1) => ({
-        url: `/dashboards/public-dashboards?page=${page}`,
+    listPublicDashboards: builder.query<PublicDashboardListWithPagination, { page: number; query?: string }>({
+      query: ({ page = 1, query = '' }) => ({
+        url: `/dashboards/public-dashboards?page=${page}&query=${query}&perpage=1`,
       }),
       transformResponse: (response: PublicDashboardListWithPaginationResponse) => ({
         ...response,

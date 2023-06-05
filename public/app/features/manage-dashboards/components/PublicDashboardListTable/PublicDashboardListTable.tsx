@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
-import { useMedia } from 'react-use';
+import { useDebounce, useMedia } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -16,6 +16,7 @@ import {
   Switch,
   Pagination,
   HorizontalGroup,
+  FilterInput,
 } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -130,13 +131,37 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
 
 export const PublicDashboardListTable = () => {
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  useDebounce(
+    () => {
+      setDebouncedSearchQuery(searchQuery);
+      setPage(1);
+    },
+    200,
+    [searchQuery]
+  );
 
   const styles = useStyles2(getStyles);
-  const { data: paginatedPublicDashboards, isLoading, isFetching, isError } = useListPublicDashboardsQuery(page);
+  const {
+    data: paginatedPublicDashboards,
+    isLoading,
+    isFetching,
+    isError,
+  } = useListPublicDashboardsQuery({ page, query: debouncedSearchQuery });
 
   return (
     <Page navId="dashboards/public" actions={isFetching && <Spinner />}>
       <Page.Contents isLoading={isLoading}>
+        <div className={styles.filterInputWrapper}>
+          <FilterInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search by name"
+            width={0}
+            escapeRegex={false}
+          />
+        </div>
         {!isLoading && !isError && !!paginatedPublicDashboards && (
           <div>
             <ul className={styles.list}>
@@ -203,5 +228,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     ${theme.breakpoints.up('sm')} {
       padding-right: ${theme.spacing(2)};
     }
+  `,
+  filterInputWrapper: css`
+    margin-bottom: ${theme.spacing(2)};
   `,
 });

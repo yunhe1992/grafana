@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -42,14 +43,15 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.SQL("SELECT dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title "+
 			"FROM dashboard_public LEFT JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id "+
-			"WHERE dashboard_public.org_id = ? "+
+			"WHERE dashboard_public.org_id = ? AND dashboard.title LIKE ? "+
 			"ORDER BY dashboard.title IS NULL, dashboard.title ASC "+
-			"LIMIT ? OFFSET ?", query.OrgID, query.Limit, query.Offset).Find(&resp.PublicDashboards)
+			"LIMIT ? OFFSET ?", query.OrgID, fmt.Sprintf("%%%s%%", query.Query), query.Limit, query.Offset).Find(&resp.PublicDashboards)
 		if err != nil {
 			return err
 		}
 
-		_, err = sess.SQL("SELECT COUNT(*) FROM dashboard_public WHERE org_id = ?", query.OrgID).Get(&resp.TotalCount)
+		_, err = sess.SQL("SELECT COUNT(*) FROM dashboard_public LEFT JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id"+
+			" WHERE dashboard_public.org_id = ? AND dashboard.title LIKE ?", query.OrgID, fmt.Sprintf("%%%s%%", query.Query)).Get(&resp.TotalCount)
 		return err
 	})
 
