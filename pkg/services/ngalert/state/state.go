@@ -33,6 +33,9 @@ type State struct {
 	// StateReason is a textual description to explain why the state has its current state.
 	StateReason string
 
+	// ResultHash is a hash of labels of the result before it is processed by
+	ResultHash uint64
+
 	// Results contains the result of the current and previous evaluations.
 	Results []Evaluation
 

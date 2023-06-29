@@ -373,7 +373,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		start := sch.clock.Now()
 
 		evalCtx := eval.NewContext(ctx, SchedulerUserFor(e.rule.OrgID))
-		ruleEval, err := sch.evaluatorFactory.Create(evalCtx, e.rule.GetEvalCondition())
+		ruleEval, err := sch.evaluatorFactory.Create(evalCtx, e.rule.GetEvalCondition(), &LoadedMetricsFromState{
+			manager: sch.stateManager,
+			rule:    e.rule,
+		})
 		var results eval.Results
 		var dur time.Duration
 		if err != nil {
@@ -576,4 +579,21 @@ func SchedulerUserFor(orgID int64) *user.SignedInUser {
 			},
 		},
 	}
+}
+
+type LoadedMetricsFromState struct {
+	manager *state.Manager
+	rule    *ngmodels.AlertRule
+}
+
+func (n LoadedMetricsFromState) Read(_ context.Context) (map[uint64]struct{}, error) {
+	states := n.manager.GetStatesForRuleUID(n.rule.OrgID, n.rule.UID)
+
+	active := map[uint64]struct{}{}
+	for _, st := range states {
+		if st.State == eval.Alerting || st.State == eval.Pending {
+			active[st.ResultHash] = struct{}{}
+		}
+	}
+	return active, nil
 }

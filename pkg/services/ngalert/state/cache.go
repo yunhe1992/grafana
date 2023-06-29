@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type ruleStates struct {
@@ -151,6 +152,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		Values:             values,
 		StartsAt:           result.EvaluatedAt,
 		EndsAt:             result.EvaluatedAt,
+		ResultHash:         util.CalculateFingerprintForLabels(result.Instance),
 	}
 	return newState
 }

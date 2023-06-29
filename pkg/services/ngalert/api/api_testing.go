@@ -67,7 +67,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
 	}
 
-	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), rule.GetEvalCondition())
+	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), rule.GetEvalCondition(), &eval.NoLoadedAlertsReader{})
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")
 	}
@@ -158,7 +158,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 	if len(cmd.Data) > 0 {
 		cond.Condition = cmd.Data[0].RefID
 	}
-	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), cond)
+	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), cond, &eval.NoLoadedAlertsReader{})
 
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")

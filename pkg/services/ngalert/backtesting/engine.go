@@ -31,19 +31,15 @@ type backtestingEvaluator interface {
 	Eval(ctx context.Context, from time.Time, interval time.Duration, evaluations int, callback callbackFunc) error
 }
 
-type stateManager interface {
-	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []state.StateTransition
-}
-
 type Engine struct {
 	evalFactory        eval.EvaluatorFactory
-	createStateManager func() stateManager
+	createStateManager func(rule *models.AlertRule) ruleStateManager
 }
 
 func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory) *Engine {
 	return &Engine{
 		evalFactory: evalFactory,
-		createStateManager: func() stateManager {
+		createStateManager: func(rule *models.AlertRule) ruleStateManager {
 			cfg := state.ManagerCfg{
 				Metrics:                 nil,
 				ExternalURL:             appUrl,
@@ -53,7 +49,10 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory) *Engine {
 				Historian:               nil,
 				MaxStateSaveConcurrency: 1,
 			}
-			return state.NewManager(cfg)
+			return ruleStateManager{
+				manager: state.NewManager(cfg),
+				rule:    rule,
+			}
 		},
 	}
 }
@@ -70,12 +69,12 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 	}
 	length := int(to.Sub(from).Seconds()) / int(rule.IntervalSeconds)
 
-	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition())
+	stateManager := e.createStateManager(rule)
+
+	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition(), stateManager)
 	if err != nil {
 		return nil, errors.Join(ErrInvalidInputData, err)
 	}
-
-	stateManager := e.createStateManager()
 
 	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluations", length)
 
@@ -89,7 +88,7 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", length)
 			return nil
 		}
-		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil)
+		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, results)
 		tsField.Set(idx, currentTime)
 		for _, s := range states {
 			field, ok := valueFields[s.CacheID]
@@ -122,7 +121,7 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 	return result, nil
 }
 
-func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user *user.SignedInUser, condition models.Condition) (backtestingEvaluator, error) {
+func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user *user.SignedInUser, condition models.Condition, manager ruleStateManager) (backtestingEvaluator, error) {
 	for _, q := range condition.Data {
 		if q.DatasourceUID == "__data__" || q.QueryType == "__data__" {
 			if len(condition.Data) != 1 {
@@ -150,7 +149,7 @@ func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFact
 
 	evaluator, err := evalFactory.Create(eval.EvaluationContext{Ctx: ctx,
 		User: user,
-	}, condition)
+	}, condition, manager)
 
 	if err != nil {
 		return nil, err
@@ -166,4 +165,25 @@ type NoopImageService struct{}
 
 func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
 	return &models.Image{}, nil
+}
+
+type ruleStateManager struct {
+	manager *state.Manager
+	rule    *models.AlertRule
+}
+
+func (m ruleStateManager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, results eval.Results) []state.StateTransition {
+	return m.manager.ProcessEvalResults(ctx, evaluatedAt, m.rule, results, nil)
+}
+
+func (n ruleStateManager) Read(_ context.Context) (map[uint64]struct{}, error) {
+	states := n.manager.GetStatesForRuleUID(n.rule.OrgID, n.rule.UID)
+
+	active := map[uint64]struct{}{}
+	for _, st := range states {
+		if st.State == eval.Alerting || st.State == eval.Pending {
+			active[st.ResultHash] = struct{}{}
+		}
+	}
+	return active, nil
 }
