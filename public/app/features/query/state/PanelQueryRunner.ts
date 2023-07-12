@@ -401,7 +401,9 @@ async function getDataSource(
 
   const ds = await getDatasourceSrv().get(datasource, scopedVars);
   if (publicDashboardAccessToken) {
-    return new PublicDashboardDataSource(ds);
+    // @ts-ignore
+    ds.__proto__.__proto__ = new PublicDashboardDataSource(ds);
+    // return new PublicDashboardDataSource(ds);
   }
 
   return ds;
