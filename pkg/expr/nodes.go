@@ -472,31 +472,9 @@ func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
 		return nil, fmt.Errorf("input data must be a wide series but got type %s (input refid)", tsSchema.Type)
 	}
 
-	if len(tsSchema.ValueIndices) == 1 {
-		s, err := mathexp.SeriesFromFrame(frame)
-		if err != nil {
-			return nil, err
-		}
-		return []mathexp.Series{s}, nil
-	}
-
-	series := []mathexp.Series{}
+	series := make([]mathexp.Series, 0, len(tsSchema.ValueIndices))
 	for _, valIdx := range tsSchema.ValueIndices {
-		l := frame.Rows()
-		f := data.NewFrameOfFieldTypes(frame.Name, l, frame.Fields[tsSchema.TimeIndex].Type(), frame.Fields[valIdx].Type())
-		f.Fields[0].Name = frame.Fields[tsSchema.TimeIndex].Name
-		f.Fields[1].Name = frame.Fields[valIdx].Name
-
-		// The new value fields' configs gets pointed to the one in the original frame
-		f.Fields[1].Config = frame.Fields[valIdx].Config
-
-		if frame.Fields[valIdx].Labels != nil {
-			f.Fields[1].Labels = frame.Fields[valIdx].Labels.Copy()
-		}
-		for i := 0; i < l; i++ {
-			f.SetRow(i, frame.Fields[tsSchema.TimeIndex].CopyAt(i), frame.Fields[valIdx].CopyAt(i))
-		}
-		s, err := mathexp.SeriesFromFrame(f)
+		s, err := mathexp.SeriesFromFrameFields(frame, tsSchema.TimeIndex, valIdx)
 		if err != nil {
 			return nil, err
 		}
