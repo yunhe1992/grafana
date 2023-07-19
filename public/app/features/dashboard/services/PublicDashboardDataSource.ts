@@ -12,7 +12,7 @@ import {
   DataSourceRef,
   toDataFrame,
 } from '@grafana/data';
-import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { BackendDataSourceResponse, DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
 import { GrafanaQueryType } from '../../../plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
@@ -21,7 +21,7 @@ import { GRAFANA_DATASOURCE_NAME } from '../../alerting/unified/utils/datasource
 export const PUBLIC_DATASOURCE = '-- Public --';
 export const DEFAULT_INTERVAL = '1min';
 
-export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
+export class PublicDashboardDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
   constructor(datasource: DataSourceRef | string | DataSourceApi | null) {
     let meta = {} as DataSourcePluginMeta;
     if (PublicDashboardDataSource.isMixedDatasource(datasource)) {

@@ -401,7 +401,7 @@ async function getDataSource(
 
   const ds = await getDatasourceSrv().get(datasource, scopedVars);
   if (publicDashboardAccessToken) {
-    return new PublicDashboardDataSource(ds);
+    Object.setPrototypeOf(Object.getPrototypeOf(ds), new PublicDashboardDataSource(ds));
   }
 
   return ds;
