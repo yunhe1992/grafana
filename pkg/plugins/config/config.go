@@ -21,7 +21,7 @@ type Cfg struct {
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
-
+	awsExternalId           string
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
 
@@ -46,7 +46,7 @@ type Cfg struct {
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
+	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, awsExternalId string, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
 	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, tracing Tracing, features plugins.FeatureToggles, angularSupportEnabled bool,
 	grafanaComURL string) *Cfg {
 	return &Cfg{
@@ -58,6 +58,7 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		PluginsAllowUnsigned:    pluginsAllowUnsigned,
 		AWSAllowedAuthProviders: awsAllowedAuthProviders,
 		AWSAssumeRoleEnabled:    awsAssumeRoleEnabled,
+		awsExternalId:           awsExternalId,
 		Azure:                   azure,
 		ProxySettings:           secureSocksDSProxy,
 		LogDatasourceRequests:   logDatasourceRequests,
