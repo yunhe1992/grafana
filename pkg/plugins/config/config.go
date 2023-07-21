@@ -21,7 +21,8 @@ type Cfg struct {
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
-	awsExternalId           string
+	AWSExternalId           string
+
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
 
@@ -58,7 +59,7 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		PluginsAllowUnsigned:    pluginsAllowUnsigned,
 		AWSAllowedAuthProviders: awsAllowedAuthProviders,
 		AWSAssumeRoleEnabled:    awsAssumeRoleEnabled,
-		awsExternalId:           awsExternalId,
+		AWSExternalId:           awsExternalId,
 		Azure:                   azure,
 		ProxySettings:           secureSocksDSProxy,
 		LogDatasourceRequests:   logDatasourceRequests,
