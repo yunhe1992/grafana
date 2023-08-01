@@ -16,6 +16,7 @@ import {
   LoadingState,
   rangeUtil,
   ScopedVars,
+  CustomVariableSupport,
 } from '@grafana/data';
 import {
   config,
@@ -38,6 +39,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import { TempoVariableQuery, TempoVariableQueryEditor, TempoVariableQueryType } from './VariableQueryEditor';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   failedMetric,
@@ -64,6 +66,28 @@ import { getErrorMessage } from './utils';
 
 export const DEFAULT_LIMIT = 20;
 
+class TempoVariableSupport extends CustomVariableSupport<TempoDatasource, TempoVariableQuery> {
+  editor = TempoVariableQueryEditor;
+
+  constructor(private datasource: TempoDatasource) {
+    super();
+    this.query = this.query.bind(this);
+  }
+
+  async execute(query: TempoVariableQuery) {
+    if (this.datasource === undefined || this.datasource.metricFindQuery === undefined) {
+      throw new Error('Datasource not initialized');
+    }
+
+    return this.datasource.metricFindQuery(query);
+  }
+
+  query(request: DataQueryRequest<TempoVariableQuery>): Observable<DataQueryResponse> {
+    const result = this.execute(request.targets[0]);
+    return from(result).pipe(map((data) => ({ data })));
+  }
+}
+
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
@@ -85,6 +109,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   uploadedJson?: string | ArrayBuffer | null = null;
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
+
+  // The version of Tempo running on the backend
+  tempoVersion: string | undefined;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -113,6 +140,43 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         ],
       };
     }
+
+    this.variables = new TempoVariableSupport(this);
+  }
+
+  async metricFindQuery(query: TempoVariableQuery) {
+    // Avoid failing if the user did not select the query type (label names, label values, etc.)
+    if (query.type === undefined) {
+      return;
+    }
+
+    switch (query.type) {
+      case TempoVariableQueryType.LabelNames: {
+        return this.labelNamesQuery();
+      }
+      case TempoVariableQueryType.LabelValues: {
+        return this.labelValuesQuery(query.label);
+      }
+      default: {
+        throw Error('Invalid query type', query.type);
+      }
+    }
+  }
+
+  async labelNamesQuery() {
+    // const params = this.getTimeRangeParams(); // TODO
+    const result = await this.metadataRequest('/api/search/tags');
+    return result.data.tagNames.map((value: string) => ({ text: value }));
+  }
+
+  async labelValuesQuery(labelName: string | undefined) {
+    // const params = this.getTimeRangeParams(); // TODO
+    if (labelName === undefined || labelName === '') {
+      return [];
+    }
+
+    const result = await this.metadataRequest(`/api/search/tag/${labelName}/values`);
+    return result.data.tagValues.map((value: string) => ({ text: value }));
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
