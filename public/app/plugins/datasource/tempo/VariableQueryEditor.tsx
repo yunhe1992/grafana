@@ -3,12 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { DataQuery, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
+import { TempoDatasource } from './datasource';
+
 export enum TempoVariableQueryType {
   LabelNames,
   LabelValues,
 }
 
-// TODO DataQuery is deprecated
 export interface TempoVariableQuery extends DataQuery {
   type: TempoVariableQueryType;
   label?: string;
@@ -20,10 +21,9 @@ const variableOptions = [
   { label: 'Label values', value: TempoVariableQueryType.LabelValues },
 ];
 
-// TODO
-export type Props = any;
-
 const refId = 'TempoDatasourceVariableQueryEditor-VariableQuery';
+
+type Props = { onChange: (value: TempoVariableQuery) => void; query: TempoVariableQuery; datasource: TempoDatasource };
 
 export const TempoVariableQueryEditor = ({ onChange, query, datasource }: Props) => {
   const [label, setLabel] = useState(query.label || '');
@@ -31,10 +31,6 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: Props)
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
 
   useEffect(() => {
-    // TODO
-    // const variableQuery = typeof query === 'string' ? migrateVariableQuery(query) : query;
-    // setType(query.type);
-
     if (type === TempoVariableQueryType.LabelValues) {
       datasource.labelNamesQuery().then((labelNames: Array<{ text: string }>) => {
         setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));

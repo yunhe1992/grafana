@@ -16,7 +16,6 @@ import {
   LoadingState,
   rangeUtil,
   ScopedVars,
-  CustomVariableSupport,
 } from '@grafana/data';
 import {
   config,
@@ -39,7 +38,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
-import { TempoVariableQuery, TempoVariableQueryEditor, TempoVariableQueryType } from './VariableQueryEditor';
+import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   failedMetric,
@@ -63,30 +62,9 @@ import {
 import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 import { getErrorMessage } from './utils';
+import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
-
-class TempoVariableSupport extends CustomVariableSupport<TempoDatasource, TempoVariableQuery> {
-  editor = TempoVariableQueryEditor;
-
-  constructor(private datasource: TempoDatasource) {
-    super();
-    this.query = this.query.bind(this);
-  }
-
-  async execute(query: TempoVariableQuery) {
-    if (this.datasource === undefined || this.datasource.metricFindQuery === undefined) {
-      throw new Error('Datasource not initialized');
-    }
-
-    return this.datasource.metricFindQuery(query);
-  }
-
-  query(request: DataQueryRequest<TempoVariableQuery>): Observable<DataQueryResponse> {
-    const result = this.execute(request.targets[0]);
-    return from(result).pipe(map((data) => ({ data })));
-  }
-}
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
@@ -164,14 +142,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async labelNamesQuery() {
-    // const params = this.getTimeRangeParams(); // TODO
     const result = await this.metadataRequest('/api/search/tags');
     return result.data.tagNames.map((value: string) => ({ text: value }));
   }
 
   async labelValuesQuery(labelName: string | undefined) {
-    // const params = this.getTimeRangeParams(); // TODO
-    if (labelName === undefined || labelName === '') {
+    if (!labelName) {
       return [];
     }
 
