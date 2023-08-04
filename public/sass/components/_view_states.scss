@@ -7,7 +7,24 @@
     display: none;
   }
 }
+.view-mode--frame {
+  @extend .view-mode--tv;
 
+  .sidemenu,
+  .page-toolbar {
+    display: none;
+  }
+
+  .submenu-controls {
+    display: none;
+  }
+
+  .dashboard-content {
+    .submenu-controls {
+      display: flex;
+    }
+  }
+}
 .view-mode--tv {
   @extend .view-mode--inactive;
 

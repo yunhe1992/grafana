@@ -140,10 +140,15 @@ function setViewModeBodyClass(body: JQuery, mode: KioskUrlValue) {
   body.removeClass('view-mode--tv');
   body.removeClass('view-mode--kiosk');
   body.removeClass('view-mode--inactive');
+  body.removeClass('view-mode--frame');
 
   switch (mode) {
     case 'tv': {
       body.addClass('view-mode--tv');
+      break;
+    }
+    case 'frame': {
+      body.addClass('view-mode--frame');
       break;
     }
     // 1 & true for legacy states
@@ -230,6 +235,10 @@ export function grafanaAppDirective(
           case 'tv': {
             search.kiosk = true;
             appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
+            break;
+          }
+          case 'frame': {
+            search.kiosk = 'frame';
             break;
           }
           case '1':

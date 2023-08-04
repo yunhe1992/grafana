@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
-import { StoreState } from '../../../../types';
+import { KIOSK_MODE_FRAME, LocationState, StoreState } from '../../../../types';
 import { getSubMenuVariables } from '../../../variables/state/selectors';
 import { VariableHide, VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
@@ -8,12 +8,16 @@ import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';
 import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
-import { AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery, UrlQueryValue } from '@grafana/data';
+import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
+import { updateTimeZoneForSession } from '../../../profile/state/reducers';
 
 interface OwnProps {
   dashboard: DashboardModel;
   links: DashboardLink[];
   annotations: AnnotationQuery[];
+  kioskMode?: UrlQueryValue;
+  location: LocationState;
 }
 
 interface ConnectedProps {
@@ -53,11 +57,13 @@ class SubMenuUnConnected extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, variables, links, annotations } = this.props;
+    const { dashboard, variables, links, annotations, kioskMode, location } = this.props;
 
     if (!this.isSubMenuVisible()) {
       return null;
     }
+
+    const showTimeControl = kioskMode === KIOSK_MODE_FRAME;
 
     return (
       <div className="submenu-controls">
@@ -66,6 +72,9 @@ class SubMenuUnConnected extends PureComponent<Props> {
         <div className="gf-form gf-form--grow" />
         {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
         <div className="clearfix" />
+        {showTimeControl && (
+          <DashNavTimeControls dashboard={dashboard} location={location} onChangeTimeZone={updateTimeZoneForSession} />
+        )}
       </div>
     );
   }

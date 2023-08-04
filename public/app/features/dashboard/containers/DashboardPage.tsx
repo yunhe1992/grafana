@@ -23,6 +23,7 @@ import {
   DashboardInitError,
   DashboardInitPhase,
   DashboardRouteInfo,
+  KIOSK_MODE_FRAME,
   StoreState,
 } from 'app/types';
 
@@ -33,6 +34,7 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { cancelVariables } from '../../variables/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { getState } from '../../../store/store';
 
 export interface Props {
   urlUid?: string;
@@ -304,10 +306,20 @@ export class DashboardPage extends PureComponent<Props, State> {
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
     const inspectPanel = this.getInspectPanel();
+    const location = getState().location;
+    const kioskMode = location.query.kiosk;
+    const showDashNav = !kioskMode || kioskMode !== KIOSK_MODE_FRAME;
 
     return (
       <div className="dashboard-container">
-        <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} $injector={$injector} onAddPanel={this.onAddPanel} />
+        {showDashNav && (
+          <DashNav
+            dashboard={dashboard}
+            isFullscreen={!!viewPanel}
+            $injector={$injector}
+            onAddPanel={this.onAddPanel}
+          />
+        )}
 
         <div className="dashboard-scroll">
           <CustomScrollbar
@@ -320,7 +332,13 @@ export class DashboardPage extends PureComponent<Props, State> {
             <div className="dashboard-content">
               {initError && this.renderInitFailedState()}
               {!editPanel && (
-                <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+                <SubMenu
+                  dashboard={dashboard}
+                  annotations={dashboard.annotations.list}
+                  links={dashboard.links}
+                  kioskMode={kioskMode}
+                  location={location}
+                />
               )}
 
               <DashboardGrid

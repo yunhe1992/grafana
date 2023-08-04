@@ -14,7 +14,7 @@ import { updateLocation } from 'app/core/actions';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
-import { CoreEvents, StoreState } from 'app/types';
+import { CoreEvents, KIOSK_MODE_FRAME, StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 
@@ -125,7 +125,8 @@ class DashNav extends PureComponent<Props> {
   }
 
   isInKioskMode() {
-    return !!this.props.location.query.kiosk;
+    const kioskMode = this.props.location.query.kiosk;
+    return !!kioskMode || kioskMode === KIOSK_MODE_FRAME;
   }
 
   isPlaylistRunning() {

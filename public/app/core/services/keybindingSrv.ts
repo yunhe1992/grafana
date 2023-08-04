@@ -9,7 +9,7 @@ import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { dispatch, store } from 'app/store/store';
 import { exitPanelEditor } from 'app/features/dashboard/components/PanelEditor/state/actions';
-import { AppEventEmitter, CoreEvents } from 'app/types';
+import { AppEventEmitter, CoreEvents, KIOSK_MODE_FRAME } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
@@ -57,6 +57,10 @@ export class KeybindingSrv {
     const anyDoc = document as any;
     const activeElement = anyDoc.activeElement;
 
+    const kioskMode = this.$location.search().kiosk;
+    if (kioskMode === KIOSK_MODE_FRAME) {
+      return;
+    }
     // typehead needs to handle it
     const typeaheads = document.querySelectorAll('.slate-typeahead--open');
     if (typeaheads.length > 0) {
